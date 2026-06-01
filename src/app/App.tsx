@@ -10,7 +10,7 @@ import sustainscanLogoDark from "../imports/logo_name_horizontal_dark.png";
 import controlUnionLogo from "../imports/CU_Logo_4_White_1.png";
 import profilePhoto from "../imports/image.png";
 import qrCode from "../imports/image-1.png";
-import logEntryPhoto from "../imports/Pometia_pinnata.jpg";
+import logEntryPhoto from "../imports/timber.png";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -928,12 +928,11 @@ function RegisterLogFormScreen({ onBack, prefill }: { onBack: () => void; prefil
             {isExisting ? (
               <div
                 className="w-full rounded-xl overflow-hidden"
-                style={{ border: "1px solid #dce4f5", background: "#eef1f6" }}>
+                style={{ border: "1px solid #dce4f5", background: "#f0f4ff" }}>
                 <img
                   src={logEntryPhoto}
-                  alt="Registered log — Pometia pinnata with field tag"
-                  className="w-full h-52 object-cover"
-                  style={{ objectPosition: "center center" }}
+                  alt="Registered log — timber"
+                  className="w-full h-52 object-contain p-2"
                 />
               </div>
             ) : (

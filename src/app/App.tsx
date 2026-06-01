@@ -15,6 +15,7 @@ import logEntryPhoto from "../imports/timber.png";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type LoginTab = "client" | "cu";
+type UserType = "client" | "cu";
 type Screen = "login" | "cu-signin" | "location" | "home" | "scan-log" | "register-log-form" | "log-inventory";
 type InventoryTab = "all" | "modified";
 
@@ -408,9 +409,9 @@ function LocationScreen({ onNext }: { onNext: (location: string) => void }) {
 
 // ─── Home Screen ──────────────────────────────────────────────────────────────
 
-function HomeScreen({ location, onLogout, onNavigate, onBackToLocation, dark, setDark }: {
+function HomeScreen({ location, onLogout, onNavigate, isCU, dark, setDark }: {
   location: string; onLogout: () => void; onNavigate: (s: Screen) => void;
-  onBackToLocation: () => void; dark: boolean; setDark: (v: boolean) => void;
+  isCU: boolean; dark: boolean; setDark: (v: boolean) => void;
 }) {
   const [profileOpen, setProfileOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -448,7 +449,7 @@ function HomeScreen({ location, onLogout, onNavigate, onBackToLocation, dark, se
           style={{ background: dark ? "#1e293b" : "#ffffff", border: `1px solid ${dark ? "rgba(255,255,255,0.1)" : "rgba(15,47,143,0.12)"}` }}>
           <div className="px-4 py-3" style={{ borderBottom: `1px solid ${dark ? "rgba(255,255,255,0.07)" : "rgba(15,47,143,0.08)"}` }}>
             <p className="text-xs font-semibold" style={{ color: textPrimary }}>Thilina</p>
-            <p className="text-[11px]" style={{ color: textMuted }}>Client</p>
+            <p className="text-[11px]" style={{ color: textMuted }}>{isCU ? "Control Union" : "Client"}</p>
           </div>
           <button onClick={onLogout}
             className="w-full flex items-center gap-2.5 px-4 py-3 text-sm font-medium transition-colors hover:bg-red-50 focus:outline-none"
@@ -489,11 +490,13 @@ function HomeScreen({ location, onLogout, onNavigate, onBackToLocation, dark, se
             className="w-full rounded-2xl p-5 flex items-center gap-5 text-left group transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] focus:outline-none shadow-sm hover:shadow-md"
             style={{ background: cardBg, border: `1px solid ${cardBorder}` }}>
             <div className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: iconBg }}>
-              <ClipboardList size={26} style={{ color: iconColor }} />
+              {isCU ? <ScanLine size={26} style={{ color: iconColor }} /> : <ClipboardList size={26} style={{ color: iconColor }} />}
             </div>
             <div className="flex-1">
-              <p className="text-base font-bold" style={{ color: textPrimary }}>Register Log</p>
-              <p className="text-xs mt-0.5" style={{ color: textMuted }}>Record new sustainability entry</p>
+              <p className="text-base font-bold" style={{ color: textPrimary }}>{isCU ? "Scan Log" : "Register Log"}</p>
+              <p className="text-xs mt-0.5" style={{ color: textMuted }}>
+                {isCU ? "View scanned log details" : "Record new sustainability entry"}
+              </p>
             </div>
             <ChevronRight size={18} style={{ color: textMuted }} className="group-hover:translate-x-0.5 transition-transform duration-150" />
           </button>
@@ -537,11 +540,12 @@ function HomeScreen({ location, onLogout, onNavigate, onBackToLocation, dark, se
 
 // ─── Scan Log Screen ──────────────────────────────────────────────────────────
 
-function ScanLogScreen({ dark, onBack, onScanNew, onOpenExisting }: {
+function ScanLogScreen({ dark, onBack, onScanNew, onOpenExisting, isCU }: {
   dark: boolean;
   onBack: () => void;
   onScanNew: () => void;
   onOpenExisting: () => void;
+  isCU?: boolean;
 }) {
   const [registeredDialogOpen, setRegisteredDialogOpen] = useState(false);
 
@@ -551,11 +555,19 @@ function ScanLogScreen({ dark, onBack, onScanNew, onOpenExisting }: {
   const textPrimary = dark ? "#ffffff" : "#0a1a4a";
   const textMuted = dark ? "#ffffff" : "#5a6a99";
 
-  const INSTRUCTIONS = [
-    "Hold the camera steady 15–20 cm from the QR.",
-    "Ensure good lighting for accurate scanning.",
-    "If the QR code is valid, the system validates the data and opens the navigation form.",
-  ];
+  const handleQrTap = () => (isCU ? onOpenExisting() : onScanNew());
+
+  const INSTRUCTIONS = isCU
+    ? [
+        "Hold the camera steady 15–20 cm from the QR.",
+        "Ensure good lighting for accurate scanning.",
+        "CU users can scan and view log details only — registration is not available.",
+      ]
+    : [
+        "Hold the camera steady 15–20 cm from the QR.",
+        "Ensure good lighting for accurate scanning.",
+        "If the QR code is valid, the system validates the data and opens the navigation form.",
+      ];
 
   return (
     <div className="min-h-screen w-full transition-colors duration-300 animate-fadeIn" style={{ background: bg, fontFamily: "'Inter', sans-serif" }}>
@@ -578,15 +590,17 @@ function ScanLogScreen({ dark, onBack, onScanNew, onOpenExisting }: {
           <h1 className="text-xl font-bold tracking-tight" style={{ color: dark ? "#ffffff" : "#0a1a4a" }}>Scan Log</h1>
         </div>
 
-        <p className="text-sm -mt-1" style={{ color: textMuted }}>Tap the QR code below to register a new log entry.</p>
+        <p className="text-sm -mt-1" style={{ color: textMuted }}>
+          {isCU ? "Scan a QR code to view registered log details." : "Tap the QR code below to register a new log entry."}
+        </p>
 
         {/* QR card — the QR itself is the tap target */}
         <div className="flex flex-col items-center gap-5 rounded-2xl px-6 py-8"
           style={{ background: surface, border: `1px solid ${surfaceBorder}` }}>
           <button
-            onClick={onScanNew}
+            onClick={handleQrTap}
             className="relative focus:outline-none group active:scale-95 transition-transform duration-150"
-            aria-label="Scan QR code">
+            aria-label={isCU ? "Scan QR code to view log" : "Scan QR code"}>
             {["top-0 left-0 border-t-2 border-l-2 rounded-tl-lg",
               "top-0 right-0 border-t-2 border-r-2 rounded-tr-lg",
               "bottom-0 left-0 border-b-2 border-l-2 rounded-bl-lg",
@@ -600,12 +614,14 @@ function ScanLogScreen({ dark, onBack, onScanNew, onOpenExisting }: {
           <div className="text-center">
             <button
               type="button"
-              onClick={() => setRegisteredDialogOpen(true)}
+              onClick={() => (isCU ? onOpenExisting() : setRegisteredDialogOpen(true))}
               className="text-sm font-semibold underline-offset-2 hover:underline focus:outline-none"
               style={{ color: textPrimary }}>
               SustainScan Log Entry
             </button>
-            <p className="text-xs mt-1" style={{ color: textMuted }}>Tap the QR code for a new entry · tap the title to view existing</p>
+            <p className="text-xs mt-1" style={{ color: textMuted }}>
+              {isCU ? "Tap the QR code or title to view log details" : "Tap the QR code for a new entry · tap the title to view existing"}
+            </p>
           </div>
         </div>
 
@@ -734,8 +750,9 @@ function FormField({ label, required, children }: { label: string; required?: bo
 const inputCls = "w-full rounded-xl px-4 py-3 text-sm outline-none transition-all border focus:border-blue-400 placeholder:text-gray-400";
 const inputStyle = { background: "#f8faff", border: "1px solid #dce4f5", color: "#0a1a4a" };
 
-function RegisterLogFormScreen({ onBack, prefill }: { onBack: () => void; prefill: RegisterLogFormData | null }) {
-  const isExisting = prefill !== null;
+function RegisterLogFormScreen({ onBack, prefill, isCU }: { onBack: () => void; prefill: RegisterLogFormData | null; isCU?: boolean }) {
+  const viewOnly = isCU || prefill !== null;
+  const screenTitle = isCU ? "Scan Log" : prefill !== null ? "View Log" : "Register Log";
   const initial = prefill ?? EMPTY_REGISTER_LOG;
 
   const [serialNo, setSerialNo] = useState(initial.serialNo);
@@ -752,7 +769,7 @@ function RegisterLogFormScreen({ onBack, prefill }: { onBack: () => void; prefil
   const [pgOpen, setPgOpen] = useState(false);
   const [pnOpen, setPnOpen] = useState(false);
 
-  const fieldStyle = isExisting
+  const fieldStyle = viewOnly
     ? { ...inputStyle, background: "#eef1f6", color: "#5a6a99", cursor: "not-allowed" as const }
     : inputStyle;
 
@@ -772,10 +789,10 @@ function RegisterLogFormScreen({ onBack, prefill }: { onBack: () => void; prefil
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
               style={{ background: "rgba(15,47,143,0.1)" }}>
-              <ClipboardList size={20} style={{ color: "#0f2f8f" }} />
+              {isCU ? <ScanLine size={20} style={{ color: "#0f2f8f" }} /> : <ClipboardList size={20} style={{ color: "#0f2f8f" }} />}
             </div>
             <h1 className="text-xl font-bold tracking-tight" style={{ color: "#0a1a4a" }}>
-              {isExisting ? "View Log" : "Register Log"}
+              {screenTitle}
             </h1>
           </div>
         </div>
@@ -790,7 +807,7 @@ function RegisterLogFormScreen({ onBack, prefill }: { onBack: () => void; prefil
               style={fieldStyle}
               value={serialNo}
               onChange={e => setSerialNo(e.target.value)}
-              readOnly={isExisting}
+              readOnly={viewOnly}
               placeholder="Serial number"
             />
           </FormField>
@@ -804,14 +821,14 @@ function RegisterLogFormScreen({ onBack, prefill }: { onBack: () => void; prefil
                 style={{ ...fieldStyle, paddingRight: "2.5rem" }}
                 value={regDate}
                 onChange={e => setRegDate(e.target.value)}
-                readOnly={isExisting}
+                readOnly={viewOnly}
               />
             </div>
           </FormField>
 
           {/* Product Group */}
           <FormField label="Product Group" required>
-            {isExisting ? (
+            {viewOnly ? (
               <input className={inputCls} style={fieldStyle} value={productGroup} readOnly />
             ) : (
               <div className="relative">
@@ -840,7 +857,7 @@ function RegisterLogFormScreen({ onBack, prefill }: { onBack: () => void; prefil
 
           {/* Product Name */}
           <FormField label="Product Name" required>
-            {isExisting ? (
+            {viewOnly ? (
               <input className={inputCls} style={fieldStyle} value={productName} readOnly />
             ) : (
               <div className="relative">
@@ -876,7 +893,7 @@ function RegisterLogFormScreen({ onBack, prefill }: { onBack: () => void; prefil
               placeholder="Lot Number"
               value={lotNumber}
               onChange={e => setLotNumber(e.target.value)}
-              readOnly={isExisting}
+              readOnly={viewOnly}
             />
           </FormField>
 
@@ -886,13 +903,13 @@ function RegisterLogFormScreen({ onBack, prefill }: { onBack: () => void; prefil
             <div className="grid grid-cols-2 gap-3">
               <FormField label="Length" required>
                 <div className="relative">
-                  <input type="number" className={inputCls} style={{ ...fieldStyle, paddingRight: "2.5rem" }} placeholder="0.00" step="0.01" min="0" value={length} onChange={e => setLength(e.target.value)} readOnly={isExisting} />
+                  <input type="number" className={inputCls} style={{ ...fieldStyle, paddingRight: "2.5rem" }} placeholder="0.00" step="0.01" min="0" value={length} onChange={e => setLength(e.target.value)} readOnly={viewOnly} />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium pointer-events-none" style={{ color: "#94a3b8" }}>m</span>
                 </div>
               </FormField>
               <FormField label="Diameter" required>
                 <div className="relative">
-                  <input type="number" className={inputCls} style={{ ...fieldStyle, paddingRight: "2.5rem" }} placeholder="0.00" step="0.01" min="0" value={diameter} onChange={e => setDiameter(e.target.value)} readOnly={isExisting} />
+                  <input type="number" className={inputCls} style={{ ...fieldStyle, paddingRight: "2.5rem" }} placeholder="0.00" step="0.01" min="0" value={diameter} onChange={e => setDiameter(e.target.value)} readOnly={viewOnly} />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium pointer-events-none" style={{ color: "#94a3b8" }}>cm</span>
                 </div>
               </FormField>
@@ -900,13 +917,13 @@ function RegisterLogFormScreen({ onBack, prefill }: { onBack: () => void; prefil
             <div className="grid grid-cols-2 gap-3">
               <FormField label="Volume" required>
                 <div className="relative">
-                  <input type="number" className={inputCls} style={{ ...fieldStyle, paddingRight: "2.5rem" }} placeholder="0.00" step="0.01" min="0" value={volume} onChange={e => setVolume(e.target.value)} readOnly={isExisting} />
+                  <input type="number" className={inputCls} style={{ ...fieldStyle, paddingRight: "2.5rem" }} placeholder="0.00" step="0.01" min="0" value={volume} onChange={e => setVolume(e.target.value)} readOnly={viewOnly} />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium pointer-events-none" style={{ color: "#94a3b8" }}>m³</span>
                 </div>
               </FormField>
               <FormField label="Defect Volume" required>
                 <div className="relative">
-                  <input type="number" className={inputCls} style={{ ...fieldStyle, paddingRight: "2.5rem" }} placeholder="0.00" step="0.01" min="0" value={defectVolume} onChange={e => setDefectVolume(e.target.value)} readOnly={isExisting} />
+                  <input type="number" className={inputCls} style={{ ...fieldStyle, paddingRight: "2.5rem" }} placeholder="0.00" step="0.01" min="0" value={defectVolume} onChange={e => setDefectVolume(e.target.value)} readOnly={viewOnly} />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium pointer-events-none" style={{ color: "#94a3b8" }}>m³</span>
                 </div>
               </FormField>
@@ -915,17 +932,17 @@ function RegisterLogFormScreen({ onBack, prefill }: { onBack: () => void; prefil
 
           {/* Note */}
           <FormField label="Note" required>
-            <textarea className={inputCls} style={{ ...fieldStyle, resize: "none" }} placeholder="Note" rows={3} value={note} onChange={e => setNote(e.target.value)} readOnly={isExisting} />
+            <textarea className={inputCls} style={{ ...fieldStyle, resize: "none" }} placeholder="Note" rows={3} value={note} onChange={e => setNote(e.target.value)} readOnly={viewOnly} />
           </FormField>
 
           {/* Status */}
           <FormField label="Status">
-            <input className={inputCls} style={fieldStyle} value={status} onChange={e => setStatus(e.target.value)} readOnly={isExisting} />
+            <input className={inputCls} style={fieldStyle} value={status} onChange={e => setStatus(e.target.value)} readOnly={viewOnly} />
           </FormField>
 
           {/* Image — registered entry shows captured log photo */}
-          <FormField label="Image" required={!isExisting}>
-            {isExisting ? (
+          <FormField label="Image" required={!viewOnly}>
+            {viewOnly ? (
               <div
                 className="w-full rounded-xl overflow-hidden"
                 style={{ border: "1px solid #dce4f5", background: "#f0f4ff" }}>
@@ -948,7 +965,7 @@ function RegisterLogFormScreen({ onBack, prefill }: { onBack: () => void; prefil
           </FormField>
 
           {/* Submit — new entries only */}
-          {!isExisting && (
+          {!viewOnly && (
             <button type="button"
               className="w-full flex items-center justify-center rounded-xl py-4 text-sm font-bold text-white mt-2 transition-all duration-200 hover:brightness-110 active:scale-[0.98] focus:outline-none"
               style={{ background: GRADIENT, boxShadow: "0 4px 16px rgba(15,47,143,0.35)" }}>
@@ -1100,27 +1117,57 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>("login");
   const [location, setLocation] = useState("");
   const [dark, setDark] = useState(false);
+  const [userType, setUserType] = useState<UserType>("client");
   const [registerLogPrefill, setRegisterLogPrefill] = useState<RegisterLogFormData | null>(null);
 
-  if (screen === "login") return <LoginScreen onSignIn={() => setScreen("location")} onCUSignIn={() => setScreen("cu-signin")} />;
-  if (screen === "cu-signin") return <CUSignInScreen onNext={loc => { setLocation(loc); setScreen("home"); }} />;
-  if (screen === "location") return <LocationScreen onNext={loc => { setLocation(loc); setScreen("home"); }} />;
+  const isCU = userType === "cu";
+
+  if (screen === "login") return (
+    <LoginScreen
+      onSignIn={() => { setUserType("client"); setScreen("location"); }}
+      onCUSignIn={() => setScreen("cu-signin")}
+    />
+  );
+  if (screen === "cu-signin") return (
+    <CUSignInScreen onNext={loc => { setUserType("cu"); setLocation(loc); setScreen("home"); }} />
+  );
+  if (screen === "location") return (
+    <LocationScreen onNext={loc => { setUserType("client"); setLocation(loc); setScreen("home"); }} />
+  );
   if (screen === "scan-log") return (
     <ScanLogScreen
       dark={dark}
+      isCU={isCU}
       onBack={() => setScreen("home")}
-      onScanNew={() => { setRegisterLogPrefill(null); setScreen("register-log-form"); }}
-      onOpenExisting={() => { setRegisterLogPrefill(REGISTERED_LOG_ENTRY); setScreen("register-log-form"); }}
+      onScanNew={() => {
+        if (!isCU) {
+          setRegisterLogPrefill(null);
+          setScreen("register-log-form");
+        }
+      }}
+      onOpenExisting={() => {
+        setRegisterLogPrefill(REGISTERED_LOG_ENTRY);
+        setScreen("register-log-form");
+      }}
     />
   );
   if (screen === "register-log-form") return (
     <RegisterLogFormScreen
-      key={registerLogPrefill ? "existing" : "new"}
-      prefill={registerLogPrefill}
+      key={isCU ? "cu-view" : registerLogPrefill ? "existing" : "new"}
+      prefill={isCU ? (registerLogPrefill ?? REGISTERED_LOG_ENTRY) : registerLogPrefill}
+      isCU={isCU}
       onBack={() => setScreen("scan-log")}
     />
   );
   if (screen === "log-inventory") return <LogInventoryScreen dark={dark} onBack={() => setScreen("home")} />;
-  return <HomeScreen location={location} onLogout={() => setScreen("login")} onNavigate={setScreen}
-    onBackToLocation={() => setScreen("location")} dark={dark} setDark={setDark} />;
+  return (
+    <HomeScreen
+      location={location}
+      isCU={isCU}
+      onLogout={() => { setUserType("client"); setScreen("login"); }}
+      onNavigate={setScreen}
+      dark={dark}
+      setDark={setDark}
+    />
+  );
 }

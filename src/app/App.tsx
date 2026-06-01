@@ -23,7 +23,7 @@ interface FormState { email: string; password: string; showPassword: boolean; }
 interface InventoryItem {
   id: number; species: string; length: number; diameter: number;
   volume: number; defectVolume: number; date: string; modified: boolean;
-  logGroup?: string; serialNo?: number; batchNo?: string; defReason?: string;
+  logGroup: string; serialNo: string; batchNo: string; defReason: string;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -62,20 +62,50 @@ const CU_CLIENT_DIRECTORY = [
   },
 ] as const;
 
+/** Timber species master list (Log Inventory & product names) */
+const TIMBER_SPECIES = [
+  "Burckella", "Grey Canarium", "Calophyllum", "Red Canarium", "Pencil Cedar", "Dillenia",
+  "Erima", "Hekakoro", "Kwila", "Lophopetalum/Perupo", "Malas", "PNG Mersawa",
+  "Red Planchonella", "White Planchonella", "Taun", "Terminalia", "PNG Walnut",
+  "Aglaia", "Amoora/Pacific Maple", "Antiaris", "PNG Basswood", "Wau Beech",
+  "Mangrove Cedar", "Red Cedar", "Hopea Heavy", "Hopea Light", "Kamarere", "Kempas",
+  "Labula", "Silkwood Maple", "Vitex", "Amberoi", "PNG Camphorwood", "Campnosperma",
+  "Hard Celtis", "Light Celtis", "Cryptocarya/Medang", "Dysox", "Endiandra/Medang",
+  "Gara Gara", "Water Gum", "Heritiera", "Litsea", "Pink Satinwood", "White Siris",
+  "Brown Albizia", "Hard Albizia", "White Albizia", "White Almond", "Scaly Ash",
+  "Silver Ash / Silkwood Ash", "PNG Hickory Ash", "Papuan Silver Ash", "PNG Bassia",
+  "Pink Birch", "Bombax", "PNG Swamp Box", "PNG Brownwood", "Brown Tulip Oak",
+  "Canthium", "Caranga", "Java Cedar", "Chrysophyllum", "Corallia", "PNG Coachwood",
+  "White Cheesewood", "Yellow Cheesewood", "Drypetes", "Duabanga", "Evodia Heavy",
+  "Evodia Light", "Fig", "Flacourtia", "White Magnolia", "Garuga", "Glochidion",
+  "Gmelina / White Beech", "Gonystylus", "Gordonia", "Yellow Hardwood", "Hernandia",
+  "Bulolo Ash", "Horsfieldia", "Scrub Ironbark", "PNG Ivorywood", "Kasi Kasi", "Kandis",
+  "Kaplak", "Kingiodendron", "Kiso", "PNG Lapome", "Black Mangrove", "Macaranga",
+  "Manilkara", "Milky Mangrove", "Mango", "Red Mangrove", "Scented Maple", "Maniltoa",
+  "White Mangrove", "Brown Mangrove", "Grey Milkwood", "Neoscortechinia", "Neuburgia", "Nutmeg",
+] as const;
+
 const INVENTORY_ITEMS: InventoryItem[] = [
-  { id: 1,  species: "Coconut", length: 10.0, diameter: 11.0, volume: 12.0,  defectVolume: 13.0, date: "2026-05-25", modified: false },
-  { id: 2,  species: "Teak",    length: 11.0, diameter: 12.1, volume: 12.0,  defectVolume: 13.0, date: "2026-05-25", modified: false },
-  { id: 3,  species: "Teak",    length:  4.0, diameter:  5.0, volume:  6.0,  defectVolume: 10.0, date: "2026-05-25", modified: true,
-    logGroup: "Group 1", serialNo: 12, batchNo: "", defReason: "Reason" },
-  { id: 4,  species: "Banana",  length: 11.1, diameter: 12.2, volume: 13.3,  defectVolume: 14.4, date: "2026-05-22", modified: true,
-    logGroup: "Group 2", serialNo: 5,  batchNo: "B-022", defReason: "Crack" },
-  { id: 5,  species: "Coconut", length: 10.0, diameter: 20.0, volume: 30.0,  defectVolume: 40.0, date: "2026-05-22", modified: false },
-  { id: 6,  species: "Coconut", length: 10.0, diameter: 20.0, volume: 204.0, defectVolume: 10.0, date: "2026-05-22", modified: false },
-  { id: 7,  species: "Coconut", length:  1.0, diameter:  2.0, volume:  3.0,  defectVolume:  4.0, date: "2026-05-22", modified: false },
-  { id: 8,  species: "Meranti", length:  8.5, diameter:  9.2, volume: 15.3,  defectVolume:  2.1, date: "2026-05-20", modified: true,
-    logGroup: "Group 3", serialNo: 8,  batchNo: "B-019", defReason: "Split end" },
-  { id: 9,  species: "Teak",    length:  6.0, diameter:  7.5, volume:  9.0,  defectVolume:  1.5, date: "2026-05-20", modified: false },
-  { id: 10, species: "Acacia",  length: 12.0, diameter: 14.0, volume: 22.5,  defectVolume:  3.0, date: "2026-05-18", modified: false },
+  { id: 1,  species: "Burckella",      length: 10.0, diameter: 11.0, volume: 12.0,  defectVolume: 13.0, date: "2026-05-25", modified: false,
+    logGroup: "Group 1", serialNo: "0000000001", batchNo: "B-001", defReason: "—" },
+  { id: 2,  species: "Grey Canarium",  length: 11.0, diameter: 12.1, volume: 12.0,  defectVolume: 13.0, date: "2026-05-25", modified: false,
+    logGroup: "Group 1", serialNo: "0000000002", batchNo: "B-002", defReason: "—" },
+  { id: 3,  species: "Calophyllum",    length:  4.0, diameter:  5.0, volume:  6.0,  defectVolume: 10.0, date: "2026-05-25", modified: true,
+    logGroup: "Group 1", serialNo: "0000000003", batchNo: "—", defReason: "Reason" },
+  { id: 4,  species: "Banana",         length: 11.1, diameter: 12.2, volume: 13.3,  defectVolume: 14.4, date: "2026-05-22", modified: true,
+    logGroup: "Group 2", serialNo: "0000000004", batchNo: "B-022", defReason: "Crack" },
+  { id: 5,  species: "Red Canarium",   length: 10.0, diameter: 20.0, volume: 30.0,  defectVolume: 40.0, date: "2026-05-22", modified: false,
+    logGroup: "Group 1", serialNo: "0000000005", batchNo: "B-005", defReason: "—" },
+  { id: 6,  species: "Pencil Cedar",   length: 10.0, diameter: 20.0, volume: 204.0, defectVolume: 10.0, date: "2026-05-22", modified: false,
+    logGroup: "Group 1", serialNo: "0000000006", batchNo: "B-006", defReason: "—" },
+  { id: 7,  species: "Dillenia",       length:  1.0, diameter:  2.0, volume:  3.0,  defectVolume:  4.0, date: "2026-05-22", modified: false,
+    logGroup: "Group 1", serialNo: "0000000007", batchNo: "B-007", defReason: "—" },
+  { id: 8,  species: "Meranti",        length:  8.5, diameter:  9.2, volume: 15.3,  defectVolume:  2.1, date: "2026-05-20", modified: true,
+    logGroup: "Group 2", serialNo: "0000000008", batchNo: "B-019", defReason: "Split end" },
+  { id: 9,  species: "Taun",           length:  6.0, diameter:  7.5, volume:  9.0,  defectVolume:  1.5, date: "2026-05-20", modified: false,
+    logGroup: "Group 1", serialNo: "0000000009", batchNo: "B-009", defReason: "—" },
+  { id: 10, species: "Acacia",         length: 12.0, diameter: 14.0, volume: 22.5,  defectVolume:  3.0, date: "2026-05-18", modified: false,
+    logGroup: "Group 2", serialNo: "0000000010", batchNo: "B-010", defReason: "—" },
 ];
 
 const LAST_SYNC = new Date(Date.now() - 1000 * 60 * 47);
@@ -699,34 +729,8 @@ const REGISTERED_LOG_ENTRY: RegisterLogFormData = {
 const PRODUCT_GROUPS = ["Group 1", "Group 2"] as const;
 
 const PRODUCT_NAMES: Record<(typeof PRODUCT_GROUPS)[number], string[]> = {
-  "Group 1": [
-    "Burckella",
-    "Grey Canarium",
-    "Calophyllum",
-    "Red Canarium",
-    "Pencil Cedar",
-    "Dillenia",
-    "Enma",
-    "Hekakoro",
-    "Kwila",
-    "Lophopetalum/Perupo",
-    "Malas",
-    "PNG Mersawa",
-    "Red Planchonella",
-    "White Planchonella",
-    "Taun",
-    "Terminalia",
-    "PNG Walnut",
-  ],
-  "Group 2": [
-    "Aglaia",
-    "Amoora/Pacific Maple",
-    "Antiaris",
-    "PNG Basswood",
-    "Wau Beech",
-    "Mangrove Cedar",
-    "Red Cedar",
-  ],
+  "Group 1": [...TIMBER_SPECIES.slice(0, 17)],
+  "Group 2": [...TIMBER_SPECIES.slice(17, 24)],
 };
 
 function FormField({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
@@ -1004,17 +1008,16 @@ function InventoryRow({ item, dark }: { item: InventoryItem; dark: boolean }) {
         </div>
       </button>
 
-      {/* Expanded panel — shown for every row */}
+      {/* Expanded panel — same layout for every row (Attachment 1 style) */}
       {expanded && (
-        <div className="px-4 pb-4 pt-3" style={{ background: expandedBg, borderTop: `1px solid ${rowBorder}` }}>
-          {/* Detail fields — only shown if data exists */}
-          {(item.logGroup || item.serialNo || item.batchNo !== undefined || item.defReason) && (
-            <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-4">
+        <div style={{ borderTop: `1px solid ${rowBorder}` }}>
+          <div className="px-4 pt-3 pb-4" style={{ background: expandedBg }}>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-3">
               {[
-                ["Log Group", item.logGroup ?? "—"],
-                ["Serial No.", item.serialNo != null ? String(item.serialNo) : "—"],
+                ["Log Group", item.logGroup],
+                ["Serial No.", item.serialNo],
                 ["Batch No.", item.batchNo || "—"],
-                ["Def. Reason", item.defReason ?? "—"],
+                ["Def. Reason", item.defReason || "—"],
               ].map(([label, val]) => (
                 <div key={label}>
                   <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: textMuted }}>{label}</p>
@@ -1022,15 +1025,16 @@ function InventoryRow({ item, dark }: { item: InventoryItem; dark: boolean }) {
                 </div>
               ))}
             </div>
-          )}
-
-          {/* Change QR button — always present in expanded view */}
-          <button
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-150 hover:brightness-110 active:scale-[0.97] focus:outline-none"
-            style={{ background: GRADIENT, color: "#ffffff", boxShadow: "0 2px 8px rgba(15,47,143,0.3)" }}>
-            <QrCode size={13} />
-            Change QR
-          </button>
+          </div>
+          <div className="px-4 py-3" style={{ background: dark ? "rgba(255,255,255,0.04)" : "#f0f5ff", borderTop: `1px solid ${rowBorder}` }}>
+            <button
+              type="button"
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-full text-xs font-semibold transition-all duration-150 hover:brightness-110 active:scale-[0.97] focus:outline-none"
+              style={{ background: GRADIENT, color: "#ffffff", boxShadow: "0 2px 8px rgba(15,47,143,0.3)" }}>
+              <QrCode size={13} />
+              Change QR
+            </button>
+          </div>
         </div>
       )}
     </div>

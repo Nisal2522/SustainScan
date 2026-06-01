@@ -46,21 +46,20 @@ const CONCESSIONS = [
   "Carpathian Oak Block",
 ];
 
-const CU_CLIENTS = [
-  "Control Union",
-  "CU Indonesia",
-  "CU Malaysia",
-  "CU Singapore",
-  "CU Thailand",
-];
-
-const CU_LOCATIONS = [
-  "Horana BCH",
-  "Jakarta Office",
-  "Kuala Lumpur HQ",
-  "Singapore Branch",
-  "Bangkok Center",
-];
+const CU_CLIENT_DIRECTORY = [
+  {
+    name: "Open Bay Timber Limited",
+    contact: "Mike Ron",
+    tel: "+675 982 9827",
+    concessions: ["Concession Unit A", "Concession Unit B"],
+  },
+  {
+    name: "Rimbunan Hijau (PNG) Limited",
+    contact: "Olive Kiu",
+    tel: "(675) 325 7677",
+    concessions: ["Concession Unit 01", "Concession Unit 02"],
+  },
+] as const;
 
 const INVENTORY_ITEMS: InventoryItem[] = [
   { id: 1,  species: "Coconut", length: 10.0, diameter: 11.0, volume: 12.0,  defectVolume: 13.0, date: "2026-05-25", modified: false },
@@ -231,9 +230,12 @@ function LoginScreen({ onSignIn, onCUSignIn }: { onSignIn: () => void; onCUSignI
 
 function CUSignInScreen({ onNext }: { onNext: (location: string) => void }) {
   const [client, setClient] = useState("");
-  const [location, setLocation] = useState("");
+  const [concession, setConcession] = useState("");
   const [clientOpen, setClientOpen] = useState(false);
-  const [locationOpen, setLocationOpen] = useState(false);
+  const [concessionOpen, setConcessionOpen] = useState(false);
+
+  const selectedClient = CU_CLIENT_DIRECTORY.find(c => c.name === client);
+  const concessions = selectedClient?.concessions ?? [];
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden animate-fadeIn" style={{ fontFamily: "'Inter', sans-serif" }}>
@@ -250,7 +252,7 @@ function CUSignInScreen({ onNext }: { onNext: (location: string) => void }) {
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-semibold uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.75)" }}>Select Client</label>
               <div className="relative">
-                <button type="button" onClick={() => { setClientOpen(v => !v); setLocationOpen(false); }}
+                <button type="button" onClick={() => { setClientOpen(v => !v); setConcessionOpen(false); }}
                   className="w-full flex items-center justify-between gap-3 rounded-xl px-4 py-3 text-sm text-left transition-all duration-150 focus:outline-none"
                   style={{ background: "rgba(255,255,255,0.18)", border: `1px solid ${clientOpen ? "rgba(96,165,250,0.6)" : "rgba(255,255,255,0.3)"}`, color: client ? "#fff" : "rgba(255,255,255,0.4)" }}>
                   <span className="truncate">{client || "Select a client…"}</span>
@@ -259,11 +261,11 @@ function CUSignInScreen({ onNext }: { onNext: (location: string) => void }) {
                 {clientOpen && (
                   <div className="absolute left-0 right-0 mt-2 rounded-2xl z-30"
                     style={{ background: "rgba(10,22,70,0.97)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.2)", boxShadow: "0 8px 32px rgba(0,0,0,0.5)", maxHeight: "200px", overflowY: "auto" }}>
-                    {CU_CLIENTS.map(c => (
-                      <button key={c} type="button" onClick={() => { setClient(c); setClientOpen(false); }}
+                    {CU_CLIENT_DIRECTORY.map(c => (
+                      <button key={c.name} type="button" onClick={() => { setClient(c.name); setConcession(""); setClientOpen(false); }}
                         className="w-full text-left px-4 py-3 text-sm transition-colors duration-100 hover:bg-white/10 focus:outline-none"
-                        style={{ color: client === c ? "#93c5fd" : "rgba(255,255,255,0.85)", fontWeight: client === c ? 600 : 400, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                        {c}
+                        style={{ color: client === c.name ? "#93c5fd" : "rgba(255,255,255,0.85)", fontWeight: client === c.name ? 600 : 400, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                        {c.name}
                       </button>
                     ))}
                   </div>
@@ -271,23 +273,30 @@ function CUSignInScreen({ onNext }: { onNext: (location: string) => void }) {
               </div>
             </div>
 
-            {/* Select Location */}
+            {/* Select Concession — options depend on selected client */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.75)" }}>Select Location</label>
+              <label className="text-xs font-semibold uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.75)" }}>Select Concession</label>
               <div className="relative">
-                <button type="button" onClick={() => { setLocationOpen(v => !v); setClientOpen(false); }}
+                <button type="button" disabled={!client}
+                  onClick={() => { if (client) { setConcessionOpen(v => !v); setClientOpen(false); } }}
                   className="w-full flex items-center justify-between gap-3 rounded-xl px-4 py-3 text-sm text-left transition-all duration-150 focus:outline-none"
-                  style={{ background: "rgba(255,255,255,0.18)", border: `1px solid ${locationOpen ? "rgba(96,165,250,0.6)" : "rgba(255,255,255,0.3)"}`, color: location ? "#fff" : "rgba(255,255,255,0.4)" }}>
-                  <span className="truncate">{location || "Select a location…"}</span>
-                  <ChevronDown size={16} style={{ color: "rgba(255,255,255,0.6)", transform: locationOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", flexShrink: 0 }} />
+                  style={{
+                    background: "rgba(255,255,255,0.18)",
+                    border: `1px solid ${concessionOpen ? "rgba(96,165,250,0.6)" : "rgba(255,255,255,0.3)"}`,
+                    color: concession ? "#fff" : "rgba(255,255,255,0.4)",
+                    opacity: client ? 1 : 0.55,
+                    cursor: client ? "pointer" : "not-allowed",
+                  }}>
+                  <span className="truncate">{concession || (client ? "Select a concession…" : "Select a client first…")}</span>
+                  <ChevronDown size={16} style={{ color: "rgba(255,255,255,0.6)", transform: concessionOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", flexShrink: 0 }} />
                 </button>
-                {locationOpen && (
+                {concessionOpen && concessions.length > 0 && (
                   <div className="absolute left-0 right-0 mt-2 rounded-2xl z-30"
                     style={{ background: "rgba(10,22,70,0.97)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.2)", boxShadow: "0 8px 32px rgba(0,0,0,0.5)", maxHeight: "200px", overflowY: "auto" }}>
-                    {CU_LOCATIONS.map(loc => (
-                      <button key={loc} type="button" onClick={() => { setLocation(loc); setLocationOpen(false); }}
+                    {concessions.map(loc => (
+                      <button key={loc} type="button" onClick={() => { setConcession(loc); setConcessionOpen(false); }}
                         className="w-full text-left px-4 py-3 text-sm transition-colors duration-100 hover:bg-white/10 focus:outline-none"
-                        style={{ color: location === loc ? "#93c5fd" : "rgba(255,255,255,0.85)", fontWeight: location === loc ? 600 : 400, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                        style={{ color: concession === loc ? "#93c5fd" : "rgba(255,255,255,0.85)", fontWeight: concession === loc ? 600 : 400, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
                         {loc}
                       </button>
                     ))}
@@ -296,9 +305,9 @@ function CUSignInScreen({ onNext }: { onNext: (location: string) => void }) {
               </div>
             </div>
 
-            <button type="button" onClick={() => client && location && onNext(location)} disabled={!client || !location}
+            <button type="button" onClick={() => client && concession && onNext(concession)} disabled={!client || !concession}
               className="w-full flex items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-semibold shadow-lg transition-all duration-200 focus:outline-none"
-              style={{ background: (client && location) ? GRADIENT : "rgba(255,255,255,0.12)", boxShadow: (client && location) ? "0 4px 24px rgba(15,47,143,0.5),inset 0 1px 0 rgba(255,255,255,0.15)" : "none", color: (client && location) ? "#fff" : "rgba(255,255,255,0.3)", cursor: (client && location) ? "pointer" : "not-allowed" }}>
+              style={{ background: (client && concession) ? GRADIENT : "rgba(255,255,255,0.12)", boxShadow: (client && concession) ? "0 4px 24px rgba(15,47,143,0.5),inset 0 1px 0 rgba(255,255,255,0.15)" : "none", color: (client && concession) ? "#fff" : "rgba(255,255,255,0.3)", cursor: (client && concession) ? "pointer" : "not-allowed" }}>
               Next <ChevronRight size={16} />
             </button>
           </div>

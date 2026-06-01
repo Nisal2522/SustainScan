@@ -10,6 +10,7 @@ import sustainscanLogoDark from "../imports/logo_name_horizontal_dark.png";
 import controlUnionLogo from "../imports/CU_Logo_4_White_1.png";
 import profilePhoto from "../imports/image.png";
 import qrCode from "../imports/image-1.png";
+import logEntryPhoto from "../imports/Pometia_pinnata.jpg";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -519,9 +520,14 @@ function HomeScreen({ location, onLogout, onNavigate, onBackToLocation, dark, se
 
 // ─── Scan Log Screen ──────────────────────────────────────────────────────────
 
-function ScanLogScreen({ dark, onBack, onScanSuccess }: {
-  dark: boolean; onBack: () => void; onScanSuccess: () => void;
+function ScanLogScreen({ dark, onBack, onScanNew, onOpenExisting }: {
+  dark: boolean;
+  onBack: () => void;
+  onScanNew: () => void;
+  onOpenExisting: () => void;
 }) {
+  const [registeredDialogOpen, setRegisteredDialogOpen] = useState(false);
+
   const bg = dark ? "#0f172a" : "#ffffff";
   const surface = dark ? "#1e293b" : "#f8faff";
   const surfaceBorder = dark ? "rgba(255,255,255,0.07)" : "rgba(15,47,143,0.1)";
@@ -561,7 +567,7 @@ function ScanLogScreen({ dark, onBack, onScanSuccess }: {
         <div className="flex flex-col items-center gap-5 rounded-2xl px-6 py-8"
           style={{ background: surface, border: `1px solid ${surfaceBorder}` }}>
           <button
-            onClick={onScanSuccess}
+            onClick={onScanNew}
             className="relative focus:outline-none group active:scale-95 transition-transform duration-150"
             aria-label="Scan QR code">
             {["top-0 left-0 border-t-2 border-l-2 rounded-tl-lg",
@@ -575,10 +581,59 @@ function ScanLogScreen({ dark, onBack, onScanSuccess }: {
               style={{ background: "#ffffff", padding: "8px" }} />
           </button>
           <div className="text-center">
-            <p className="text-sm font-semibold" style={{ color: textPrimary }}>SustainScan Log Entry</p>
-            <p className="text-xs mt-1" style={{ color: textMuted }}>Tap the QR code to scan and open the form</p>
+            <button
+              type="button"
+              onClick={() => setRegisteredDialogOpen(true)}
+              className="text-sm font-semibold underline-offset-2 hover:underline focus:outline-none"
+              style={{ color: textPrimary }}>
+              SustainScan Log Entry
+            </button>
+            <p className="text-xs mt-1" style={{ color: textMuted }}>Tap the QR code for a new entry · tap the title to view existing</p>
           </div>
         </div>
+
+        {registeredDialogOpen && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center px-5"
+            style={{ background: "rgba(10, 22, 70, 0.55)", backdropFilter: "blur(4px)" }}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="qr-registered-title"
+            onClick={() => setRegisteredDialogOpen(false)}>
+            <div
+              className="w-full max-w-sm rounded-2xl p-6 flex flex-col gap-5 shadow-2xl"
+              style={{ background: "#ffffff", border: "1px solid #e8edf9" }}
+              onClick={e => e.stopPropagation()}>
+              <div className="flex flex-col gap-2 text-center">
+                <h2 id="qr-registered-title" className="text-base font-bold" style={{ color: "#0a1a4a" }}>
+                  QR Code Already Registered
+                </h2>
+                <p className="text-sm leading-relaxed" style={{ color: "#5a6a99" }}>
+                  This QR code is already registered. Do you want to view the existing log details?
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setRegisteredDialogOpen(false)}
+                  className="flex-1 rounded-xl py-3 text-sm font-semibold transition-all duration-200 hover:bg-gray-50 focus:outline-none"
+                  style={{ background: "#f0f4ff", color: "#0f2f8f", border: "1px solid #dce4f5" }}>
+                  No
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRegisteredDialogOpen(false);
+                    onOpenExisting();
+                  }}
+                  className="flex-1 rounded-xl py-3 text-sm font-semibold text-white transition-all duration-200 hover:brightness-110 active:scale-[0.98] focus:outline-none"
+                  style={{ background: GRADIENT, boxShadow: "0 4px 16px rgba(15,47,143,0.35)" }}>
+                  Yes
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Instructions */}
         <div className="rounded-2xl px-5 py-4" style={{ background: surface, border: `1px solid ${surfaceBorder}` }}>
@@ -598,14 +653,80 @@ function ScanLogScreen({ dark, onBack, onScanSuccess }: {
 
 // ─── Register Log Form ────────────────────────────────────────────────────────
 
-const PRODUCT_GROUPS = ["Hardwood", "Softwood", "Plywood", "MDF", "Veneer", "Chipboard"];
-const PRODUCT_NAMES: Record<string, string[]> = {
-  Hardwood:  ["Teak", "Meranti", "Merbau", "Keruing", "Balau"],
-  Softwood:  ["Pine", "Spruce", "Fir", "Cedar", "Larch"],
-  Plywood:   ["Structural Ply", "Marine Ply", "Commercial Ply"],
-  MDF:       ["Standard MDF", "Moisture Resistant MDF", "Fire Retardant MDF"],
-  Veneer:    ["Teak Veneer", "Oak Veneer", "Walnut Veneer"],
-  Chipboard: ["Standard Chipboard", "Moisture Resistant Chipboard"],
+interface RegisterLogFormData {
+  serialNo: string;
+  regDate: string;
+  productGroup: string;
+  productName: string;
+  lotNumber: string;
+  length: string;
+  diameter: string;
+  volume: string;
+  defectVolume: string;
+  note: string;
+  status: string;
+}
+
+const EMPTY_REGISTER_LOG: RegisterLogFormData = {
+  serialNo: "",
+  regDate: "",
+  productGroup: "",
+  productName: "",
+  lotNumber: "",
+  length: "",
+  diameter: "",
+  volume: "",
+  defectVolume: "",
+  note: "",
+  status: "",
+};
+
+/** Sample data for an already-registered QR log entry */
+const REGISTERED_LOG_ENTRY: RegisterLogFormData = {
+  serialNo: "0000000001",
+  regDate: "2026-05-25",
+  productGroup: "Group 1",
+  productName: "Taun",
+  lotNumber: "LOT-2026-042",
+  length: "10.0",
+  diameter: "11.0",
+  volume: "12.0",
+  defectVolume: "1.2",
+  note: "Previously registered — review details before updating.",
+  status: "AVAILABLE",
+};
+
+const PRODUCT_GROUPS = ["Group 1", "Group 2"] as const;
+
+const PRODUCT_NAMES: Record<(typeof PRODUCT_GROUPS)[number], string[]> = {
+  "Group 1": [
+    "Burckella",
+    "Grey Canarium",
+    "Calophyllum",
+    "Red Canarium",
+    "Pencil Cedar",
+    "Dillenia",
+    "Enma",
+    "Hekakoro",
+    "Kwila",
+    "Lophopetalum/Perupo",
+    "Malas",
+    "PNG Mersawa",
+    "Red Planchonella",
+    "White Planchonella",
+    "Taun",
+    "Terminalia",
+    "PNG Walnut",
+  ],
+  "Group 2": [
+    "Aglaia",
+    "Amoora/Pacific Maple",
+    "Antiaris",
+    "PNG Basswood",
+    "Wau Beech",
+    "Mangrove Cedar",
+    "Red Cedar",
+  ],
 };
 
 function FormField({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
@@ -622,14 +743,27 @@ function FormField({ label, required, children }: { label: string; required?: bo
 const inputCls = "w-full rounded-xl px-4 py-3 text-sm outline-none transition-all border focus:border-blue-400 placeholder:text-gray-400";
 const inputStyle = { background: "#f8faff", border: "1px solid #dce4f5", color: "#0a1a4a" };
 
-function RegisterLogFormScreen({ onBack }: { onBack: () => void }) {
-  const [productGroup, setProductGroup] = useState("");
-  const [productName, setProductName] = useState("");
+function RegisterLogFormScreen({ onBack, prefill }: { onBack: () => void; prefill: RegisterLogFormData | null }) {
+  const isExisting = prefill !== null;
+  const initial = prefill ?? EMPTY_REGISTER_LOG;
+
+  const [serialNo, setSerialNo] = useState(initial.serialNo);
+  const [regDate, setRegDate] = useState(initial.regDate);
+  const [productGroup, setProductGroup] = useState(initial.productGroup);
+  const [productName, setProductName] = useState(initial.productName);
+  const [lotNumber, setLotNumber] = useState(initial.lotNumber);
+  const [length, setLength] = useState(initial.length);
+  const [diameter, setDiameter] = useState(initial.diameter);
+  const [volume, setVolume] = useState(initial.volume);
+  const [defectVolume, setDefectVolume] = useState(initial.defectVolume);
+  const [note, setNote] = useState(initial.note);
+  const [status, setStatus] = useState(initial.status);
   const [pgOpen, setPgOpen] = useState(false);
   const [pnOpen, setPnOpen] = useState(false);
 
-  const QR_CODE_VALUE = "d2aa277d-8739-467a-8e14-e3aee9680176";
-  const TODAY = new Date().toISOString().split("T")[0];
+  const fieldStyle = isExisting
+    ? { ...inputStyle, background: "#eef1f6", color: "#5a6a99", cursor: "not-allowed" as const }
+    : inputStyle;
 
   return (
     <div className="min-h-screen w-full animate-fadeIn" style={{ background: "#ffffff", fontFamily: "'Inter', sans-serif" }}>
@@ -649,134 +783,188 @@ function RegisterLogFormScreen({ onBack }: { onBack: () => void }) {
               style={{ background: "rgba(15,47,143,0.1)" }}>
               <ClipboardList size={20} style={{ color: "#0f2f8f" }} />
             </div>
-            <h1 className="text-xl font-bold tracking-tight" style={{ color: "#0a1a4a" }}>Register Log</h1>
+            <h1 className="text-xl font-bold tracking-tight" style={{ color: "#0a1a4a" }}>
+              {isExisting ? "View Log" : "Register Log"}
+            </h1>
           </div>
         </div>
 
         {/* Form */}
         <div className="flex flex-col gap-5 px-5 py-6 pb-10">
 
-          {/* Serial No — read-only */}
+          {/* Serial No */}
           <FormField label="Serial No" required>
-            <input className={inputCls} style={inputStyle} value={QR_CODE_VALUE} readOnly />
+            <input
+              className={inputCls}
+              style={fieldStyle}
+              value={serialNo}
+              onChange={e => setSerialNo(e.target.value)}
+              readOnly={isExisting}
+              placeholder="Serial number"
+            />
           </FormField>
 
           {/* Reg Date */}
           <FormField label="Reg Date" required>
             <div className="relative">
-              <input type="date" className={inputCls} style={{ ...inputStyle, paddingRight: "2.5rem" }} defaultValue={TODAY} />
+              <input
+                type="date"
+                className={inputCls}
+                style={{ ...fieldStyle, paddingRight: "2.5rem" }}
+                value={regDate}
+                onChange={e => setRegDate(e.target.value)}
+                readOnly={isExisting}
+              />
             </div>
           </FormField>
 
-          {/* Product Group dropdown */}
+          {/* Product Group */}
           <FormField label="Product Group" required>
-            <div className="relative">
-              <button type="button" onClick={() => { setPgOpen(v => !v); setPnOpen(false); }}
-                className="w-full rounded-xl px-4 py-3 text-sm text-left flex items-center justify-between focus:outline-none"
-                style={{ ...inputStyle, color: productGroup ? "#0a1a4a" : "#9ca3af", border: pgOpen ? "1px solid #60a5fa" : "1px solid #dce4f5" }}>
-                <span>{productGroup || "Select"}</span>
-                <ChevronDown size={15} style={{ color: "#5a6a99", transform: pgOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }} />
-              </button>
-              {pgOpen && (
-                <div className="absolute left-0 right-0 mt-1 rounded-xl z-20 shadow-xl overflow-hidden"
-                  style={{ background: "#ffffff", border: "1px solid #dce4f5", maxHeight: "200px", overflowY: "auto" }}>
-                  {PRODUCT_GROUPS.map(g => (
-                    <button key={g} type="button"
-                      onClick={() => { setProductGroup(g); setProductName(""); setPgOpen(false); }}
-                      className="w-full text-left px-4 py-2.5 text-sm hover:bg-blue-50 focus:outline-none transition-colors"
-                      style={{ color: productGroup === g ? "#0f2f8f" : "#0a1a4a", fontWeight: productGroup === g ? 600 : 400, borderBottom: "1px solid #f0f4ff" }}>
-                      {g}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            {isExisting ? (
+              <input className={inputCls} style={fieldStyle} value={productGroup} readOnly />
+            ) : (
+              <div className="relative">
+                <button type="button" onClick={() => { setPgOpen(v => !v); setPnOpen(false); }}
+                  className="w-full rounded-xl px-4 py-3 text-sm text-left flex items-center justify-between focus:outline-none"
+                  style={{ ...inputStyle, color: productGroup ? "#0a1a4a" : "#9ca3af", border: pgOpen ? "1px solid #60a5fa" : "1px solid #dce4f5" }}>
+                  <span>{productGroup || "Select"}</span>
+                  <ChevronDown size={15} style={{ color: "#5a6a99", transform: pgOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }} />
+                </button>
+                {pgOpen && (
+                  <div className="absolute left-0 right-0 mt-1 rounded-xl z-20 shadow-xl overflow-hidden"
+                    style={{ background: "#ffffff", border: "1px solid #dce4f5", maxHeight: "200px", overflowY: "auto" }}>
+                    {PRODUCT_GROUPS.map(g => (
+                      <button key={g} type="button"
+                        onClick={() => { setProductGroup(g); setProductName(""); setPgOpen(false); }}
+                        className="w-full text-left px-4 py-2.5 text-sm hover:bg-blue-50 focus:outline-none transition-colors"
+                        style={{ color: productGroup === g ? "#0f2f8f" : "#0a1a4a", fontWeight: productGroup === g ? 600 : 400, borderBottom: "1px solid #f0f4ff" }}>
+                        {g}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </FormField>
 
-          {/* Product Name dropdown */}
+          {/* Product Name */}
           <FormField label="Product Name" required>
-            <div className="relative">
-              <button type="button"
-                onClick={() => { if (productGroup) { setPnOpen(v => !v); setPgOpen(false); } }}
-                className="w-full rounded-xl px-4 py-3 text-sm text-left flex items-center justify-between focus:outline-none"
-                style={{ ...inputStyle, color: productName ? "#0a1a4a" : "#9ca3af", border: pnOpen ? "1px solid #60a5fa" : "1px solid #dce4f5", opacity: productGroup ? 1 : 0.5 }}>
-                <span>{productName || "Select"}</span>
-                <ChevronDown size={15} style={{ color: "#5a6a99", transform: pnOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }} />
-              </button>
-              {pnOpen && productGroup && (
-                <div className="absolute left-0 right-0 mt-1 rounded-xl z-20 shadow-xl overflow-hidden"
-                  style={{ background: "#ffffff", border: "1px solid #dce4f5", maxHeight: "200px", overflowY: "auto" }}>
-                  {(PRODUCT_NAMES[productGroup] ?? []).map(n => (
-                    <button key={n} type="button"
-                      onClick={() => { setProductName(n); setPnOpen(false); }}
-                      className="w-full text-left px-4 py-2.5 text-sm hover:bg-blue-50 focus:outline-none transition-colors"
-                      style={{ color: productName === n ? "#0f2f8f" : "#0a1a4a", fontWeight: productName === n ? 600 : 400, borderBottom: "1px solid #f0f4ff" }}>
-                      {n}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            {isExisting ? (
+              <input className={inputCls} style={fieldStyle} value={productName} readOnly />
+            ) : (
+              <div className="relative">
+                <button type="button"
+                  onClick={() => { if (productGroup) { setPnOpen(v => !v); setPgOpen(false); } }}
+                  className="w-full rounded-xl px-4 py-3 text-sm text-left flex items-center justify-between focus:outline-none"
+                  style={{ ...inputStyle, color: productName ? "#0a1a4a" : "#9ca3af", border: pnOpen ? "1px solid #60a5fa" : "1px solid #dce4f5", opacity: productGroup ? 1 : 0.5 }}>
+                  <span>{productName || "Select"}</span>
+                  <ChevronDown size={15} style={{ color: "#5a6a99", transform: pnOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }} />
+                </button>
+                {pnOpen && productGroup && (
+                  <div className="absolute left-0 right-0 mt-1 rounded-xl z-20 shadow-xl overflow-hidden"
+                    style={{ background: "#ffffff", border: "1px solid #dce4f5", maxHeight: "200px", overflowY: "auto" }}>
+                    {(PRODUCT_NAMES[productGroup as keyof typeof PRODUCT_NAMES] ?? []).map(n => (
+                      <button key={n} type="button"
+                        onClick={() => { setProductName(n); setPnOpen(false); }}
+                        className="w-full text-left px-4 py-2.5 text-sm hover:bg-blue-50 focus:outline-none transition-colors"
+                        style={{ color: productName === n ? "#0f2f8f" : "#0a1a4a", fontWeight: productName === n ? 600 : 400, borderBottom: "1px solid #f0f4ff" }}>
+                        {n}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </FormField>
 
           {/* Lot Number */}
           <FormField label="Lot Number">
-            <input className={inputCls} style={inputStyle} placeholder="Lot Number" />
+            <input
+              className={inputCls}
+              style={fieldStyle}
+              placeholder="Lot Number"
+              value={lotNumber}
+              onChange={e => setLotNumber(e.target.value)}
+              readOnly={isExisting}
+            />
           </FormField>
 
           {/* Measurements — 2-column pairs */}
           <div className="flex flex-col gap-3">
             <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#5a6a99" }}>Measurements</p>
             <div className="grid grid-cols-2 gap-3">
-              {[{ label: "Length", unit: "m" }, { label: "Diameter", unit: "cm" }].map(({ label, unit }) => (
-                <FormField key={label} label={label} required>
-                  <div className="relative">
-                    <input type="number" className={inputCls} style={{ ...inputStyle, paddingRight: "2.5rem" }} placeholder="0.00" step="0.01" min="0" />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium pointer-events-none" style={{ color: "#94a3b8" }}>{unit}</span>
-                  </div>
-                </FormField>
-              ))}
+              <FormField label="Length" required>
+                <div className="relative">
+                  <input type="number" className={inputCls} style={{ ...fieldStyle, paddingRight: "2.5rem" }} placeholder="0.00" step="0.01" min="0" value={length} onChange={e => setLength(e.target.value)} readOnly={isExisting} />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium pointer-events-none" style={{ color: "#94a3b8" }}>m</span>
+                </div>
+              </FormField>
+              <FormField label="Diameter" required>
+                <div className="relative">
+                  <input type="number" className={inputCls} style={{ ...fieldStyle, paddingRight: "2.5rem" }} placeholder="0.00" step="0.01" min="0" value={diameter} onChange={e => setDiameter(e.target.value)} readOnly={isExisting} />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium pointer-events-none" style={{ color: "#94a3b8" }}>cm</span>
+                </div>
+              </FormField>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              {[{ label: "Volume", unit: "m³" }, { label: "Defect Volume", unit: "m³" }].map(({ label, unit }) => (
-                <FormField key={label} label={label} required>
-                  <div className="relative">
-                    <input type="number" className={inputCls} style={{ ...inputStyle, paddingRight: "2.5rem" }} placeholder="0.00" step="0.01" min="0" />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium pointer-events-none" style={{ color: "#94a3b8" }}>{unit}</span>
-                  </div>
-                </FormField>
-              ))}
+              <FormField label="Volume" required>
+                <div className="relative">
+                  <input type="number" className={inputCls} style={{ ...fieldStyle, paddingRight: "2.5rem" }} placeholder="0.00" step="0.01" min="0" value={volume} onChange={e => setVolume(e.target.value)} readOnly={isExisting} />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium pointer-events-none" style={{ color: "#94a3b8" }}>m³</span>
+                </div>
+              </FormField>
+              <FormField label="Defect Volume" required>
+                <div className="relative">
+                  <input type="number" className={inputCls} style={{ ...fieldStyle, paddingRight: "2.5rem" }} placeholder="0.00" step="0.01" min="0" value={defectVolume} onChange={e => setDefectVolume(e.target.value)} readOnly={isExisting} />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium pointer-events-none" style={{ color: "#94a3b8" }}>m³</span>
+                </div>
+              </FormField>
             </div>
           </div>
 
           {/* Note */}
           <FormField label="Note" required>
-            <textarea className={inputCls} style={{ ...inputStyle, resize: "none" }} placeholder="Note" rows={3} />
+            <textarea className={inputCls} style={{ ...fieldStyle, resize: "none" }} placeholder="Note" rows={3} value={note} onChange={e => setNote(e.target.value)} readOnly={isExisting} />
           </FormField>
 
           {/* Status */}
           <FormField label="Status">
-            <input className={inputCls} style={inputStyle} defaultValue="AVAILABLE" />
+            <input className={inputCls} style={fieldStyle} value={status} onChange={e => setStatus(e.target.value)} readOnly={isExisting} />
           </FormField>
 
-          {/* Image capture */}
-          <FormField label="Image" required>
-            <button type="button"
-              className="w-full rounded-xl flex flex-col items-center justify-center gap-2 transition-all duration-150 hover:bg-blue-50 focus:outline-none"
-              style={{ background: "#f8faff", border: "1px solid #dce4f5", height: "140px" }}>
-              <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "#e8edf9" }}>
-                <ScanLine size={20} style={{ color: "#5a6a99" }} />
+          {/* Image — registered entry shows captured log photo */}
+          <FormField label="Image" required={!isExisting}>
+            {isExisting ? (
+              <div
+                className="w-full rounded-xl overflow-hidden"
+                style={{ border: "1px solid #dce4f5", background: "#eef1f6" }}>
+                <img
+                  src={logEntryPhoto}
+                  alt="Registered log — Pometia pinnata with field tag"
+                  className="w-full h-52 object-cover"
+                  style={{ objectPosition: "center center" }}
+                />
               </div>
-              <span className="text-sm" style={{ color: "#94a3b8" }}>Tap to capture image</span>
-            </button>
+            ) : (
+              <button type="button"
+                className="w-full rounded-xl flex flex-col items-center justify-center gap-2 transition-all duration-150 hover:bg-blue-50 focus:outline-none"
+                style={{ background: "#f8faff", border: "1px solid #dce4f5", height: "140px" }}>
+                <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "#e8edf9" }}>
+                  <ScanLine size={20} style={{ color: "#5a6a99" }} />
+                </div>
+                <span className="text-sm" style={{ color: "#94a3b8" }}>Tap to capture image</span>
+              </button>
+            )}
           </FormField>
 
-          {/* Submit */}
-          <button type="button"
-            className="w-full flex items-center justify-center rounded-xl py-4 text-sm font-bold text-white mt-2 transition-all duration-200 hover:brightness-110 active:scale-[0.98] focus:outline-none"
-            style={{ background: GRADIENT, boxShadow: "0 4px 16px rgba(15,47,143,0.35)" }}>
-            Submit
-          </button>
+          {/* Submit — new entries only */}
+          {!isExisting && (
+            <button type="button"
+              className="w-full flex items-center justify-center rounded-xl py-4 text-sm font-bold text-white mt-2 transition-all duration-200 hover:brightness-110 active:scale-[0.98] focus:outline-none"
+              style={{ background: GRADIENT, boxShadow: "0 4px 16px rgba(15,47,143,0.35)" }}>
+              Submit
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -922,12 +1110,26 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>("login");
   const [location, setLocation] = useState("");
   const [dark, setDark] = useState(false);
+  const [registerLogPrefill, setRegisterLogPrefill] = useState<RegisterLogFormData | null>(null);
 
   if (screen === "login") return <LoginScreen onSignIn={() => setScreen("location")} onCUSignIn={() => setScreen("cu-signin")} />;
   if (screen === "cu-signin") return <CUSignInScreen onNext={loc => { setLocation(loc); setScreen("home"); }} />;
   if (screen === "location") return <LocationScreen onNext={loc => { setLocation(loc); setScreen("home"); }} />;
-  if (screen === "scan-log") return <ScanLogScreen dark={dark} onBack={() => setScreen("home")} onScanSuccess={() => setScreen("register-log-form")} />;
-  if (screen === "register-log-form") return <RegisterLogFormScreen onBack={() => setScreen("scan-log")} />;
+  if (screen === "scan-log") return (
+    <ScanLogScreen
+      dark={dark}
+      onBack={() => setScreen("home")}
+      onScanNew={() => { setRegisterLogPrefill(null); setScreen("register-log-form"); }}
+      onOpenExisting={() => { setRegisterLogPrefill(REGISTERED_LOG_ENTRY); setScreen("register-log-form"); }}
+    />
+  );
+  if (screen === "register-log-form") return (
+    <RegisterLogFormScreen
+      key={registerLogPrefill ? "existing" : "new"}
+      prefill={registerLogPrefill}
+      onBack={() => setScreen("scan-log")}
+    />
+  );
   if (screen === "log-inventory") return <LogInventoryScreen dark={dark} onBack={() => setScreen("home")} />;
   return <HomeScreen location={location} onLogout={() => setScreen("login")} onNavigate={setScreen}
     onBackToLocation={() => setScreen("location")} dark={dark} setDark={setDark} />;

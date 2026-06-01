@@ -32,20 +32,7 @@ const BG_URL = bgImage;
 
 const GRADIENT = "linear-gradient(135deg,#1a45b5 0%,#0f2f8f 60%,#0a1f6b 100%)";
 
-const CONCESSIONS = [
-  "Borneo Rainforest Reserve",
-  "Kalimantan Timur Block A",
-  "Sumatra Highland Forest",
-  "Papua New Guinea North",
-  "Sarawak Timber Zone B",
-  "Congo Basin East",
-  "Amazon Sustainable Unit",
-  "Mekong Delta Plantation",
-  "West Africa Teak Reserve",
-  "Baltic Mixed Forest",
-  "Siberian Larch Zone",
-  "Carpathian Oak Block",
-];
+const CONCESSIONS = ["Concession Unit A", "Concession Unit B"];
 
 const CU_CLIENT_DIRECTORY = [
   {

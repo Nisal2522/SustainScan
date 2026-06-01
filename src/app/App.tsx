@@ -647,8 +647,8 @@ function RegisterLogFormScreen({ onBack }: { onBack: () => void }) {
         {/* Form */}
         <div className="flex flex-col gap-5 px-5 py-6 pb-10">
 
-          {/* QR Code — read-only */}
-          <FormField label="QR Code" required>
+          {/* Serial No — read-only */}
+          <FormField label="Serial No" required>
             <input className={inputCls} style={inputStyle} value={QR_CODE_VALUE} readOnly />
           </FormField>
 
